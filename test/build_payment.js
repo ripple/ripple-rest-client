@@ -34,6 +34,7 @@ describe('Ripple REST Client buildPayment', function() {
 
   it('should fail due to an empty payment object', function(done) {
     var newPayment = {};
+
     client.buildPayment(newPayment, function(error, response) {
       assert(!response);
       assert(error);
