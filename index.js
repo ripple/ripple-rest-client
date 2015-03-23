@@ -1,6 +1,5 @@
 const async = require('async');
 const uuid = require('node-uuid');
-const RippleRestV1 = require(__dirname+'/lib/clients/rest_v1.js');
 const http = require('superagent');
 const _ = require('lodash');
 
@@ -24,6 +23,19 @@ Client.prototype.ping = function(callback){
         callback(null, response.body);
       }
   });
+};
+
+Client.prototype.getTransactionFee = function(callback) {
+  var url = this.api+'v1/transaction-fee';
+
+  http
+    .get(url)
+    .end(function(error, response){
+      if (error) {
+        return callback(error);
+      }
+      callback(null, response.body);
+    });
 };
 
 Client.prototype.generateUUID = function(callback) {
@@ -63,19 +75,16 @@ Client.prototype.generateNewWallet = function(callback) {
 };
 
 Client.prototype.sendPayment = function(payment, callback){
-  var payment = payment;
   var url = this.api+'v1/accounts/'+this.account+'/payments';
 
   if (this.secret !== '') {
     payment.secret = this.secret;
     payment.client_resource_id = uuid.v4();
   }
-
   http
     .post(url)
     .send(payment)
     .end(function(error, response) {
-
       if (error) {
         return callback(error);
       }
@@ -222,7 +231,7 @@ Client.prototype.getTransaction = function(hash, callback){
 };
 
 Client.prototype.getServerStatus = function(opts, callback){
-  var url = this.api+'v1/status';
+  var url = this.api+'v1/server';
   http
     .get(url)
     .end(function(error, response) {
@@ -267,7 +276,6 @@ Client.prototype.updateAccountSettings = function(opts, callback) {
 
 
 Client.prototype.getPaymentStatus = function(statusUrl, callback){
-
   http.
     get(statusUrl)
     .end(function(error, response){
@@ -280,21 +288,26 @@ Client.prototype.getPaymentStatus = function(statusUrl, callback){
       } else {
         callback(response.body);
       }
-
   });
 };
 
 Client.prototype._getAndHandlePaymentStatus = function(statusUrl, callback, loopFunction){
   var self = this;
-  self.getPaymentStatus(statusUrl, function(error, response){
-    if(error){
-      callback(error, null);
-      return loopFunction(statusUrl, callback, loopFunction);
+  self.getPaymentStatus(statusUrl, function(error, response) {
+    if (error) {
+      if (error.response && error.response.body && error.response.body.error === 'txnNotFound') {
+        setTimeout(function() {
+          loopFunction(statusUrl, callback, loopFunction);
+        }, 100);
+      } else {
+        callback(error, null);
+      }
+      return;
     }
-    if (response && (response.state === 'validated' || response.payment.state === 'validated')){
+    if (response && (response.state === 'validated' || response.state === 'failed')) {
       callback(null, response.payment);
     } else {
-      setTimeout(function(){
+      setTimeout(function() {
         loopFunction(statusUrl, callback, loopFunction);
       }, 100);
     }
@@ -304,7 +317,15 @@ Client.prototype._getAndHandlePaymentStatus = function(statusUrl, callback, loop
 Client.prototype.pollPaymentStatus = function(payment, callback){
   var self = this;
   if (payment && payment.status_url) {
-    self._getAndHandlePaymentStatus(payment.status_url, callback, self._getAndHandlePaymentStatus.bind(this));
+    var urlParse = require('url').parse;
+    var url = urlParse(payment.status_url);
+
+    if (_.isEmpty(url.protocol)) {
+      payment.status_url = 'https://' + payment.status_url;
+    }
+
+    self._getAndHandlePaymentStatus(payment.status_url, callback,
+      self._getAndHandlePaymentStatus.bind(this));
   } else {
     callback(new Error('RippleRestError:StatusUrlUnavailable'));
   }
@@ -384,16 +405,6 @@ Client.prototype.sendAndConfirmPayment = function(opts, callback){
       self.pollPaymentStatus(payment, next);
     }
   ], callback);
-};
-
-Client.RippleAPI = function(options) {
-  switch(options.adapter.toLowerCase()) {
-    case 'rest':
-      return new RippleRestV1(options);
-      break;
-    default:
-      throw new Error('InvalidAdapter')
-  }
 };
 
 module.exports = Client;
