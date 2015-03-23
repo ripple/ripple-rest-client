@@ -14,7 +14,6 @@ describe('Ripple REST Client sendPayment', function() {
     account: 'rMinhWxZz4jeHoJGyddtmwg6dWhyqQKtJz'
   });
 
-  if (SECRET) {
     it('should send and confirm payment via the response payment status url', function(done) {
       this.timeout(10000);
 
@@ -96,7 +95,4 @@ describe('Ripple REST Client sendPayment', function() {
         done();
       });
     });
-  } else {
-    it.skip('should fail because destination account and amount is missing -- MISSING SECRET, so skipping test');
-  }
 });
