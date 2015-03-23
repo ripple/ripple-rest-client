@@ -1,26 +1,21 @@
-const RippleRestClient = require('../');
-const assert = require('assert');
-const fixtures = require('./fixtures');
+'use strict';
 
-describe('Ripple REST Client getTrustLines', function() {
-  var rippleRestClient;
-
-  before(function () {
-    rippleRestClient = new RippleRestClient({
-      account: fixtures.ripple_address.source_account
-    });
-  });
+var Client = require('../');
+var assert = require('assert');
 
 
-  it('should generate a new ripple wallet with secret', function(done){
+describe('Ripple REST Client Generate Build Payment', function() {
+  var rippleRestClient = new Client({});
 
-    rippleRestClient.generateNewWallet(function(error, response){
-      assert(!error);
-      assert(response);
+  it('should generate a new ripple wallet with secret', function(done) {
+
+    rippleRestClient.generateNewWallet(function(error, response) {
+
+      assert(!error, 'API call failed');
+      assert(response, 'response is null');
       assert(response.address);
       assert(response.secret);
       done();
     });
   });
-
 });

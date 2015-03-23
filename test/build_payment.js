@@ -1,58 +1,50 @@
-const Client = require('../');
-const assert = require('assert');
-const fixtures = require('./fixtures');
+'use strict';
+
+var Client = require('../');
+var assert = require('assert');
+var account_info = require('./fixtures/account_info')();
+var common = require('./common/common.js');
+var fixture = require('./fixtures/build_payment');
 
 describe('Ripple REST Client buildPayment', function() {
-  var client;
-
-  before(function () {
-    client = new Client({
-      account: fixtures.ripple_address.source_account
+  var client = new Client({
+      account: account_info.source_account,
+      secret: account_info.secret,
+      from_issuer: account_info.source_account,
+      to_issuer: account_info.destination_account
     });
-  });
 
-  it('should successfully build payment', function(done){
+  it('should successfully build payment', function(done) {
 
     var newPayment = {
       currency: 'GWD',
       amount: 10,
-      recipient: fixtures.ripple_address.destination_account,
-      source_currencies: ['GWD'],
-      from_issuer: fixtures.ripple_address.destination_account,
-      to_issuer: fixtures.ripple_address.destination_account
+      recipient: account_info.destination_account,
+      source_currencies: ['GWD', 'USD']
     };
 
-    client.buildPayment(newPayment, function(error, response){
-      assert(!error);
-      assert.deepEqual(fixtures.responses['1_4_0'].success.buildPayment, response);
+    client.buildPayment(newPayment, function(error, response) {
+      assert(!error, 'API call failed');
+      assert(response, 'Response is null');
+      assert(response.payments);
+      assert(common.ensureKeysNotNull(fixture.paymentKeys, response.payments));
       done();
     });
   });
 
-  it('should successfully build payment with multiple source currencies', function(done){
-
-    var newPayment = {
-      currency: 'GWD',
-      amount: 10,
-      recipient: fixtures.ripple_address.destination_account,
-      source_currencies: ['GWD', 'USD'],
-      from_issuer: fixtures.ripple_address.destination_account,
-      to_issuer: fixtures.ripple_address.destination_account
-    };
-
-    client.buildPayment(newPayment, function(error, response){
-      assert(!error);
-      assert.deepEqual(fixtures.responses['1_4_0'].success.buildPaymentMultipleSourceCurrencies, response);
-      done();
-    });
-
-  });
-
-  it('should fail due to an empty payment object', function(done){
+  it('should fail due to an empty payment object', function(done) {
     var newPayment = {};
-    client.buildPayment(newPayment, function(error, response){
+
+    client.buildPayment(newPayment, function(error, response) {
       assert(!response);
-      assert.deepEqual(fixtures.responses['1_4_0'].errors.invalid_request, error);
+      assert(error);
+      assert(error.response);
+      assert(error.response.body);
+      assert(!error.response.body.success, 'Request is not successful');
+      assert.strictEqual(error.response.body.error_type, 'invalid_request');
+      assert.strictEqual(error.response.body.error, 'restINVALID_PARAMETER');
+      assert.strictEqual(error.response.body.message,
+        'Parameter is not a valid Ripple address: destination_account');
       done();
     });
   });
