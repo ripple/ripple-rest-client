@@ -317,12 +317,15 @@ Client.prototype._getAndHandlePaymentStatus = function(statusUrl, callback, loop
 Client.prototype.pollPaymentStatus = function(payment, callback){
   var self = this;
   if (payment && payment.status_url) {
-    var url = payment.status_url;
+    var urlParse = require('url').parse;
+    var url = urlParse(payment.status_url);
 
-    if (url.indexOf('http') < 0) {
-      url = 'https://' + url;
+    if (_.isEmpty(url.protocol)) {
+      payment.status_url = 'https://' + payment.status_url;
     }
-    self._getAndHandlePaymentStatus(url, callback, self._getAndHandlePaymentStatus.bind(this));
+
+    self._getAndHandlePaymentStatus(payment.status_url, callback,
+      self._getAndHandlePaymentStatus.bind(this));
   } else {
     callback(new Error('RippleRestError:StatusUrlUnavailable'));
   }
