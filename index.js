@@ -3,7 +3,6 @@ const uuid = require('node-uuid');
 const http = require('superagent');
 const _ = require('lodash');
 
-
 var Client = function(options) {
   this.api = options.api || 'https://api.ripple.com/';
   this.account = options.account;
