@@ -1,8 +1,11 @@
 language: node_js
 node_js:
-- '0.10'
-before_install: 
-script: npm test
+  - "0.10"
+before_install:
+install:
+  - npm install
+script:
+  - npm test
 notifications:
   email: false
 env:
