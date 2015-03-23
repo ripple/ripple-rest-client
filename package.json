@@ -4,7 +4,7 @@
   "description": "A Node.js client library for interacting with Ripple REST servers.",
   "main": "./index.js",
   "scripts": {
-    "test": "mocha -R spec test/ --timeout=3000"
+    "test": "mocha test/ --timeout=5000"
   },
   "repository": {
     "type": "git",
@@ -23,17 +23,12 @@
   },
   "dependencies": {
     "async": "^0.9.0",
-    "bluebird": "^2.3.4",
     "lodash": "^3.5.0",
-    "node-uuid": "^1.4.1",
-    "request": "2.x.x",
-    "require-all": "0.0.8",
-    "require-all-to-camel": "^1.0.0",
-    "superagent": "^0.19.1"
+    "node-uuid": "^1.4.3",
+    "superagent": "^1.1.0"
   },
   "devDependencies": {
-    "mocha": "1.16.x",
-    "assert": "1.1.x",
-    "sinon": ""
+    "mocha": "^2.2.1",
+    "assert": "^1.3.0"
   }
 }
