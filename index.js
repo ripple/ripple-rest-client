@@ -318,7 +318,8 @@ Client.prototype._getAndHandlePaymentStatus =
     }
 
     if (response &&
-        (response.state === 'validated' || response.state === 'failed')) {
+        (response.state === 'validated' || response.state === 'failed') &&
+        (response.ledger != 'undefined')) {
       callback(null, response);
     } else {
       setTimeout(function() {
